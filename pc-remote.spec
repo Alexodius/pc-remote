@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """Build the executable.
 
-    py -3.12 -m PyInstaller pc-remote.spec --noconfirm
+    py -3 -m PyInstaller pc-remote.spec --noconfirm
 
 Built as a folder rather than a single file, on purpose:
 

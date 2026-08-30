@@ -1,0 +1,115 @@
+name: release
+
+# Publishing a version is one command: push a tag.
+#
+#   git tag -a v1.1.0 -m "pc-remote 1.1.0" && git push origin v1.1.0
+#
+# The build then happens on a clean machine rather than on someone's
+# desktop, so what people download cannot contain a stray local file.
+# An existing tag can also be released by hand from the Actions tab.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, for example v1.0.0"
+        required: true
+
+permissions: read-all
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    # Only this job may write, and only to releases. Everything else in
+    # the repository keeps the read-only default.
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        id: python
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag against the version in the code
+        id: version
+        shell: pwsh
+        run: |
+          $tag = if ("${{ inputs.tag }}") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $ver = $tag -replace '^v', ''
+          $code = (Select-String -Path app/__init__.py -Pattern '__version__\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          if ($ver -ne $code) {
+            throw "tag $tag disagrees with __version__ = $code in app/__init__.py"
+          }
+          "tag=$tag"     | Out-File $env:GITHUB_OUTPUT -Append
+          "version=$ver" | Out-File $env:GITHUB_OUTPUT -Append
+
+      - name: Build
+        shell: pwsh
+        # The runner has its own py launcher; point the build script at the
+        # interpreter this job installed instead of whatever py -3 finds.
+        env:
+          PC_REMOTE_PYTHON: ${{ steps.python.outputs.python-path }}
+        run: ./build.ps1
+
+      - name: Package
+        id: package
+        shell: pwsh
+        run: |
+          # Running the exe creates data\ next to it: settings, and a log
+          # carrying the computer name and the addresses that called in.
+          # A build machine should never produce one, but shipping it would
+          # be silent and irreversible, so make sure.
+          Remove-Item -Recurse -Force dist/pc-remote/data -ErrorAction SilentlyContinue
+
+          $name = "pc-remote-${{ steps.version.outputs.version }}-windows-x64.zip"
+          Compress-Archive -Path dist/pc-remote -DestinationPath $name
+          $sha = (Get-FileHash $name -Algorithm SHA256).Hash.ToLower()
+          "$sha  $name" | Out-File "$name.sha256" -Encoding ascii
+          "name=$name" | Out-File $env:GITHUB_OUTPUT -Append
+          "sha=$sha"   | Out-File $env:GITHUB_OUTPUT -Append
+
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $notes = @"
+          ## Install
+
+          Download the archive, unpack it anywhere and run once:
+
+          ``````
+          pc-remote.exe --install
+          ``````
+
+          That registers autostart and starts the remote. Python is inside the
+          build, so nothing else has to be installed. Then open
+          ``http://<this-computer>:5000/admin`` and change the password — the
+          default is ``changeme``.
+
+          Connecting a smart home: [docs/home-assistant.md](https://github.com/${{ github.repository }}/blob/${{ steps.version.outputs.tag }}/docs/home-assistant.md)
+
+          ## Checksum
+
+          ``````
+          ${{ steps.package.outputs.sha }}  ${{ steps.package.outputs.name }}
+          ``````
+
+          Built by [this workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) from ``${{ steps.version.outputs.tag }}``.
+          "@
+          $notes | Out-File notes.md -Encoding utf8
+
+          gh release create "${{ steps.version.outputs.tag }}" `
+            "${{ steps.package.outputs.name }}" `
+            "${{ steps.package.outputs.name }}.sha256" `
+            --title "pc-remote ${{ steps.version.outputs.version }}" `
+            --notes-file notes.md
