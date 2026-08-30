@@ -33,6 +33,8 @@
     'Allowed networks': 'Разрешённые сети',
     'Anything using "%s" stops working immediately.':
       'Всё, что пользуется токеном «%s», сразу перестанет работать.',
+    'Applied after a restart. Bookmarks, the smart home and any integration have to follow it.':
+      'Применяется после перезапуска. Закладки, умный дом и любые интеграции должны последовать за ним.',
     'At least 4 characters': 'Минимум 4 символа',
     'At least one delay option is required': 'Нужен хотя бы один вариант задержки',
     'Autostart': 'Автозапуск',
@@ -58,6 +60,7 @@
     'Copy': 'Скопировать',
     'Copy the token now': 'Скопируйте токен сейчас',
     'Could not read the file': 'Не разобрал файл',
+    'Create': 'Создать',
     'Current settings will be replaced by the ones in "%s".':
       'Текущие настройки будут заменены теми, что в «%s».',
     'Custom launch buttons': 'Свои кнопки запуска',
@@ -103,12 +106,14 @@
       'По одной на строку. Всё, что не попало в список, получает отказ — даже если порт случайно пробросят наружу.',
     'Overview': 'Обзор',
     'Password': 'Пароль',
+    'Pick a password': 'Придумайте пароль',
     'Port': 'Порт',
     'Re-register': 'Перерегистрировать',
     'Reconnect': 'Подключиться заново',
     'Refresh': 'Обновить',
     'Remote': 'Пульт',
     'Remote ·': 'Пульт ·',
+    'Repeat the password': 'Повторите пароль',
     'Restart': 'Перезапуск',
     'Restart now': 'Перезапустить',
     'Restart the remote': 'Перезапустить пульт',
@@ -158,6 +163,7 @@
       'Единственное место, где видно, что пульт делал и на чём падал.',
     'The password did not work': 'Пароль не подошёл',
     'The password is set by the environment variable': 'Пароль задан переменной окружения',
+    'The two passwords do not match': 'Пароли не совпадают',
     'Theme': 'Тема',
     'There are unsaved changes and they will be lost.':
       'Есть несохранённые изменения, они будут потеряны.',
@@ -166,6 +172,8 @@
     'Token revoked': 'Токен отозван',
     'Tokens': 'Токены',
     'Tray icon': 'Значок в трее',
+    'Until there is one the remote is not protected at all. Whoever sets it first is the one who can shut this computer down.':
+      'Пока его нет, пульт не защищён вообще ничем. Кто задаст пароль первым, тот и сможет выключать этот компьютер.',
     'Uptime': 'Время работы',
     'Used whenever the delay is not given explicitly, including calls from outside. Change with care.':
       'Применяется, когда задержку не указали явно — в том числе при вызове снаружи. Менять осторожно.',

@@ -73,8 +73,11 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 
 Runs the tests first and refuses to build if they fail.
 
-**Open `/admin` and change the password first thing** — the default is
-`changeme`.
+**The first time you open it, the remote asks for a password to be set.**
+There is no default one to change and none is shipped: until you pick one,
+every command is refused. Choose it from the machine itself or from your
+phone — whoever gets there first is the one who can shut this computer
+down.
 
 ---
 

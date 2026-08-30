@@ -30,11 +30,12 @@ DEFAULTS = {
     "version": CONFIG_VERSION,
     "host": "0.0.0.0",
     "port": 5000,
-    # Placeholder only; the real password lives in data/config.json.
+    # Empty until the first run: the remote refuses every command until
+    # somebody opens it and picks a password of their own.
     # REMOTE_WIN11_PASSWORD overrides the file when set.
     # This is the human password — integrations should use tokens instead,
     # so that changing it does not break them all at once.
-    "password": "changeme",
+    "password": "",
     # [{"name", "id", "token", "created", "last_used"}], accepted wherever
     # the password is, plus as an Authorization: Bearer header.
     "api_tokens": [],
@@ -141,8 +142,20 @@ def save(cfg):
         return cfg
 
 
+# Older versions shipped with this placeholder written into the defaults,
+# so it appears in the README, in every copy of the project and in search
+# results. It can never count as a password somebody chose.
+PLACEHOLDER_PASSWORD = "changeme"
+
+
 def password():
     return os.environ.get("REMOTE_WIN11_PASSWORD") or load()["password"]
+
+
+def needs_setup():
+    """True while no password of the owner's own choosing exists."""
+    value = password()
+    return not value or value == PLACEHOLDER_PASSWORD
 
 
 def action_enabled(action_id, default=True):

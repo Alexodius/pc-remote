@@ -5,7 +5,10 @@ Nothing is executed here — the border with the system is stubbed in
 support.Base.stub_system.
 """
 
-from app import actions, state
+import os
+from unittest import mock
+
+from app import actions, config, state
 
 from .support import Base
 
@@ -166,3 +169,39 @@ class TestCatalogRules(Base):
         self.assertFalse(ok)
         self.assertIn("boom", text)
         self.assertEqual(rc, -1)
+
+
+class TestLaunchers(Base):
+    """Custom buttons run programs, and where they run from matters."""
+
+    def launcher(self, name, target):
+        cfg = config.load()
+        cfg["launchers"] = [{"name": name, "target": target}]
+        config.save(cfg)
+        return next(a for a in actions.all_actions()
+                    if a.id.startswith("launch:"))
+
+    def test_a_program_starts_in_its_own_folder(self):
+        # A launcher sitting next to the files it loads finds nothing when
+        # it inherits the remote's working directory
+        target = os.path.join(self._tmp.name, "launcher.exe")
+        open(target, "wb").close()
+        action = self.launcher("Game", target)
+        with mock.patch("os.startfile") as started:
+            actions.execute(action, 0)
+        self.assertEqual(started.call_args.kwargs.get("cwd"), self._tmp.name)
+
+    def test_a_uri_is_handed_over_as_is(self):
+        action = self.launcher("Big Picture", "steam://open/bigpicture")
+        with mock.patch("os.startfile") as started:
+            actions.execute(action, 0)
+        self.assertEqual(started.call_args.args[0], "steam://open/bigpicture")
+        self.assertNotIn("cwd", started.call_args.kwargs)
+
+    def test_ids_never_collide(self):
+        cfg = config.load()
+        cfg["launchers"] = [{"name": "Game", "target": "a.exe"},
+                            {"name": "Game", "target": "b.exe"}]
+        config.save(cfg)
+        ids = [a.id for a in actions.all_actions() if a.id.startswith("launch:")]
+        self.assertEqual(len(ids), len(set(ids)), ids)

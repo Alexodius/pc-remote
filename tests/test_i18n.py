@@ -113,7 +113,7 @@ class TestInterfaceTranslations(Base):
                     "admin.html")
 
     def test_scripts_are_translated(self):
-        for name in ("remote.js", "admin.js", "dialog.js"):
+        for name in ("remote.js", "admin.js", "dialog.js", "gate.js"):
             self._check(script_strings(os.path.join(APP, "static", name)), name)
 
     def test_dictionary_is_sorted(self):

@@ -46,6 +46,7 @@ STRINGS = {
     "bigpicture.hint": ("Steam в режиме телевизора", "Steam in TV mode"),
 
     # ---- groups ----
+    "word.custom_button": ("Пользовательская кнопка", "Custom button"),
     "group.power": ("Питание", "Power"),
     "group.session": ("Сеанс", "Session"),
     "group.media": ("Звук", "Sound"),
@@ -99,6 +100,8 @@ STRINGS = {
         "Password changed. Integrations that used it need to move to a token "
         "or be updated by hand."),
     "adm.password_short": ("Пароль короче 4 символов", "Password shorter than 4 characters"),
+    "setup.done": ("Пароль сохранён", "Password saved"),
+    "setup.taken": ("Пароль уже задан", "The password is already set"),
     "adm.restarting": ("Перезапускаюсь, вернусь через пару секунд",
                        "Restarting, back in a couple of seconds"),
     "adm.restart_failed": ("Не удалось перезапустить: {detail}",

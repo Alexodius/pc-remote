@@ -152,6 +152,11 @@ def _same(a, b):
 
 def check_password(ip, given):
     """Accepts both the human password and an integration token."""
+    if config.needs_setup():
+        # Before the first run there is nothing to authorise against, and an
+        # empty secret would compare equal to an empty stored one.
+        return False
+
     cfg = config.load()
     given = str(given or "")
 

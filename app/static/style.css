@@ -312,7 +312,7 @@ body {
   border-radius: var(--r-md);
 }
 .seg button {
-  flex: 1; min-height: 36px; padding: 0;
+  flex: 1; min-height: 44px; padding: 0;
   border: 0; border-radius: var(--r-sm);
   background: transparent; color: var(--ink-48);
   font-family: var(--font); font-size: 14px; font-weight: 400;
@@ -412,6 +412,10 @@ code {
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .toast.err { background: var(--danger); color: #fff; }
 
+/* The attribute loses to any author rule that sets display, and the gate
+   switches its two halves with it */
+[hidden] { display: none !important; }
+
 /* ---------- lock screen ---------- */
 
 .lock {
@@ -480,7 +484,7 @@ body.is-offline #delaycard { opacity: .3; pointer-events: none; }
 }
 .chip button { border: 0; background: none; color: var(--ink-48); cursor: pointer; padding: 0; }
 
-.danger-zone .grouptitle { color: var(--danger); }
+.grouptitle.danger-zone { color: var(--danger); }
 
 .state-ok { color: var(--switch-on); }
 .state-bad { color: var(--danger); }
@@ -531,11 +535,14 @@ body.is-offline #delaycard { opacity: .3; pointer-events: none; }
 }
 
 .side .spacer { flex: 1; }
+.side-tools { display: flex; flex-direction: column; gap: 2px; }
 .side .side-link {
   display: flex; align-items: center; gap: var(--s-xs);
-  padding: 11px var(--s-sm); border-radius: var(--r-md);
-  color: var(--accent); text-decoration: none; font-size: 15px;
-  letter-spacing: -0.24px;
+  width: 100%; min-height: 44px; padding: 11px var(--s-sm);
+  border: 0; border-radius: var(--r-md); background: none;
+  color: var(--accent); text-decoration: none;
+  font-family: var(--font); font-size: 15px; letter-spacing: -0.24px;
+  text-align: left; cursor: pointer;
 }
 .side .side-link svg { width: 17px; height: 17px; }
 @media (hover: hover) { .side .side-link:hover { background: var(--surface-2); } }
@@ -570,10 +577,20 @@ body.is-offline #delaycard { opacity: .3; pointer-events: none; }
   .side nav::-webkit-scrollbar { display: none; }
   .side nav button {
     width: auto; white-space: nowrap; border-radius: var(--r-pill);
-    background: var(--surface-2); min-height: 40px; padding: 8px 15px;
+    background: var(--surface-2); min-height: 44px; padding: 8px 15px;
   }
   .side nav button svg { display: none; }
-  .side .spacer, .side .side-link { display: none; }
+
+  /* The brand and the tools share one row, the tabs take the next */
+  .side { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .brand { order: 0; flex: 1; min-width: 0; }
+  .side-tools { order: 1; flex-direction: row; gap: 2px; }
+  .side nav { order: 2; flex-basis: 100%; }
+  .side .spacer { display: none; }
+  .side-tools .side-link { width: 44px; padding: 0; justify-content: center; }
+  .side-tools .side-link svg { width: 19px; height: 19px; }
+  /* Only the icon fits; the accessible name lives on the title attribute */
+  .side-tools .side-label { display: none; }
   .content { padding: var(--s-md) var(--s-md) 120px; }
   .panel h2 { font-size: 28px; }
 }

@@ -31,6 +31,8 @@ mimetypes.add_type("image/svg+xml", ".svg")
 app = Flask(__name__)
 START_TIME = time.time()
 
+MIN_PASSWORD = 4
+
 
 # --------------------------------------------------------------------------
 # Shared
@@ -122,6 +124,7 @@ def page_remote():
         "remote.html",
         pc=pc_name(),
         version=__version__,
+        needs_setup=config.needs_setup(),
         delays=cfg["delay_choices"],
         default_delay=cfg["default_delay"],
     )
@@ -129,7 +132,31 @@ def page_remote():
 
 @app.route("/admin")
 def page_admin():
-    return render_template("admin.html", pc=pc_name(), version=__version__)
+    return render_template("admin.html", pc=pc_name(), version=__version__,
+                           needs_setup=config.needs_setup())
+
+
+@app.route("/setup", methods=["POST"])
+def setup():
+    """First run: claim the remote by giving it a password.
+
+    Open only while none exists. After that it is a closed door rather than
+    a password reset — losing the password means editing data/config.json on
+    the machine itself, which is the point.
+    """
+    lang = i18n.from_request(request)
+    if not config.needs_setup():
+        return jsonify({"error": i18n.t("setup.taken", lang)}), 409
+
+    new = str(_payload().get("password") or "")
+    if len(new) < MIN_PASSWORD:
+        return jsonify({"error": i18n.t("adm.password_short", lang)}), 400
+
+    cfg = config.load()
+    cfg["password"] = new
+    config.save(cfg)
+    log.warning("%s -> FIRST RUN: the remote now has a password", request.remote_addr)
+    return jsonify({"result": i18n.t("setup.done", lang)})
 
 
 @app.route("/manifest.webmanifest")
@@ -175,8 +202,9 @@ def healthz():
 
 @app.route("/actions")
 def list_actions():
-    """The catalog for the interface. No password: it exposes button labels
-    only, and the network is already filtered by the allow-list."""
+    """The catalog for the interface. No password, so it carries labels only:
+    a custom button's hint is a path on this disk and stays behind one.
+    """
     lang = i18n.from_request(request)
     items = [actions.describe(a, lang) for a in actions.all_actions()
              if actions.is_enabled(a)]
@@ -250,7 +278,7 @@ def admin_api():
         mq["password"] = ""
         return jsonify({
             "config": cfg,
-            "catalog": [actions.describe(a, i18n.from_request(request))
+            "catalog": [actions.describe(a, lang, reveal=True)
                         for a in actions.all_actions()],
             "groups": actions.groups(i18n.from_request(request)),
             "env_password": bool(os.environ.get("REMOTE_WIN11_PASSWORD")),
@@ -315,7 +343,12 @@ def admin_api():
         return jsonify({"result": msg, "autostart": autostart.status()})
 
     if op == "log":
-        return jsonify({"lines": tail(int(data.get("lines", 200)))})
+        try:
+            lines = int(data.get("lines", 200))
+        except (TypeError, ValueError):
+            lines = 200
+        # Unbounded, a single request could pull the whole file into memory
+        return jsonify({"lines": tail(max(1, min(2000, lines)))})
 
     if op == "save":
         patch = data.get("config") or {}
@@ -344,7 +377,7 @@ def admin_api():
 
     if op == "password":
         new = str(data.get("new_password") or "")
-        if len(new) < 4:
+        if len(new) < MIN_PASSWORD:
             return jsonify({"error": i18n.t("adm.password_short", lang)}), 400
         cfg = config.load()
         cfg["password"] = new
@@ -402,6 +435,9 @@ def main():
     log.info("=" * 62)
     log.info("pc-remote %s starting on %s, python %s",
              __version__, pc_name(), sys.version.split()[0])
+    if config.needs_setup():
+        log.warning("No password yet: open http://%s:%s and pick one. "
+                    "Until then every command is refused.", local_ip(), port)
     if left:
         log.warning("Picked up a running timer after restart: %s s", left)
 

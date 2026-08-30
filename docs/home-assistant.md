@@ -38,8 +38,9 @@ Or, from a build, `pc-remote.exe --install`.
 It installs the dependencies, registers autostart, starts the service and
 checks that it answers. The address it prints is the one you need below.
 
-Open `http://<address>:5000/admin` and **change the password right away**
-(Access → Password). The default is `changeme`.
+Open `http://<address>:5000` and **pick a password** — the remote asks for
+one on first open and refuses every command until it has one. Nothing is
+shipped for you to change, so nobody knows it but you.
 
 Check that everything works: `http://<address>:5000` should show the remote,
 and the Lock button should lock the screen.

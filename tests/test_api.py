@@ -167,6 +167,18 @@ class TestPublicEndpoints(ApiBase):
             self.assertEqual(status, 200, path)
             self.assertNotIn(b"{{", resp.data, f"{path}: unrendered template")
 
+    def test_catalog_hides_where_a_custom_button_points(self):
+        # /actions asks for no password, and the target is a path on this
+        # disk — the button's name is all an unauthenticated caller gets
+        cfg = config.load()
+        cfg["launchers"] = [{"name": "Notes", "target": r"C:\secret\diary.exe"}]
+        config.save(cfg)
+        _, resp = self.get("/actions")
+        item = next(a for a in resp.get_json()["actions"]
+                    if a["id"].startswith("launch:"))
+        self.assertEqual(item["label"], "Notes")
+        self.assertNotIn("diary", item["hint"])
+
 
 class TestAdminApi(ApiBase):
 
@@ -193,5 +205,75 @@ class TestAdminApi(ApiBase):
         status, _ = self.admin("password", new_password="123")
         self.assertEqual(status, 400)
 
+    def test_settings_page_still_sees_the_target(self):
+        # The settings page asked for a password, so it gets the path it
+        # needs to show — the catalog is trimmed only where it is open
+        cfg = config.load()
+        cfg["launchers"] = [{"name": "Notes", "target": r"C:\secret\diary.exe"}]
+        config.save(cfg)
+        _, body = self.admin("get")
+        item = next(a for a in body["catalog"] if a["id"].startswith("launch:"))
+        self.assertIn("diary", item["hint"])
+
+    def test_log_survives_nonsense_line_counts(self):
+        for value in ("abc", None, -5, 10 ** 9):
+            status, body = self.admin("log", lines=value)
+            self.assertEqual(status, 200, value)
+            self.assertLessEqual(len(body["lines"]), 2000, value)
+
     def test_unknown_op(self):
         self.assertEqual(self.admin("no-such-op")[0], 400)
+
+
+class TestFirstRun(ApiBase):
+    """No password in the settings means the remote has never been claimed."""
+
+    def unclaimed(self, value=""):
+        cfg = config.load()
+        cfg["password"] = value
+        config.save(cfg)
+
+    def test_nothing_runs_before_a_password_exists(self):
+        self.unclaimed()
+        for secret in ("", "anything", None):
+            status, _ = self.post("/api", {"password": secret, "action": "lock"})
+            self.assertEqual(status, 403, secret)
+        self.assertEqual(self.rec.calls, [], "a command ran on an unclaimed remote")
+
+    def test_the_old_shipped_placeholder_does_not_count(self):
+        # It was printed in the README of every published copy, so it is a
+        # published string rather than a password
+        self.unclaimed("changeme")
+        self.assertTrue(config.needs_setup())
+        status, _ = self.post("/api", {"password": "changeme", "action": "lock"})
+        self.assertEqual(status, 403)
+
+    def test_setup_claims_the_remote_once(self):
+        self.unclaimed()
+        status, body = self.post("/setup", {"password": "chosen-by-me"})
+        self.assertEqual(status, 200, body)
+        self.assertFalse(config.needs_setup())
+
+        status, _ = self.post("/api", {"password": "chosen-by-me", "action": "lock"})
+        self.assertEqual(status, 200)
+
+        # A second call is a closed door, not a password reset
+        status, _ = self.post("/setup", {"password": "someone-else"})
+        self.assertEqual(status, 409)
+        self.assertEqual(config.password(), "chosen-by-me")
+
+    def test_setup_refuses_a_short_password(self):
+        self.unclaimed()
+        status, _ = self.post("/setup", {"password": "abc"})
+        self.assertEqual(status, 400)
+        self.assertTrue(config.needs_setup())
+
+    def test_the_gate_shows_on_both_pages(self):
+        self.unclaimed()
+        for path in ("/", "/admin"):
+            _, resp = self.get(path)
+            self.assertIn(b'data-setup="1"', resp.data, path)
+        self.post("/setup", {"password": "chosen-by-me"})
+        for path in ("/", "/admin"):
+            _, resp = self.get(path)
+            self.assertIn(b'data-setup="0"', resp.data, path)

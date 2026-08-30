@@ -41,7 +41,10 @@ async function api(op, extra) {
       { op, password: pwd.v, lang: window.I18n.lang }, extra || {})),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || 'Error'), { status: res.status });
+  if (!res.ok) {
+    throw Object.assign(new Error(data.error || window.I18n.s('Error')),
+                        { status: res.status });
+  }
   return data;
 }
 
@@ -64,6 +67,16 @@ document.querySelectorAll('#tabs button').forEach((b) => {
 /* ---------------- sign-in ---------------- */
 
 async function tryUnlock() {
+  // Nothing to sign in to yet: the box is creating the password instead
+  if (window.Gate.needed) {
+    const created = await window.Gate.create();
+    if (!created) return;
+    pwd.v = created;
+    await boot();
+    $('lock').classList.remove('show');
+    return;
+  }
+
   const v = $('pwd').value.trim();
   if (!v) { $('lockmsg').textContent = window.I18n.s('Enter the password'); return; }
   pwd.v = v;
@@ -96,6 +109,7 @@ function renderOverview(d) {
   ].map(([k, v, small]) =>
     `<div class="stat"><div class="k">${esc(k)}</div>` +
     `<div class="v${small ? ' small' : ''}">${esc(v)}</div></div>`).join('');
+  window.I18n.apply($('stats'));
 
   const a = d.autostart;
   $('ov_autostart').innerHTML = a.installed
@@ -159,7 +173,8 @@ function renderLaunchers() {
   const host = $('launchers');
   host.innerHTML = '';
   if (!cfg.launchers.length) {
-    host.innerHTML = '<div class="hintline" style="margin:0">Nothing yet.</div>';
+    host.innerHTML =
+      `<div class="hintline" style="margin:0">${window.I18n.s('Nothing yet.')}</div>`;
     return;
   }
   cfg.launchers.forEach((l, i) => {
@@ -198,12 +213,12 @@ function renderMqtt(m, st) {
   $('mq_port').value = m.port || 1883;
   $('mq_username').value = m.username || '';
   $('mq_password').value = '';
-  $('mq_password').placeholder = m.password_set
-    ? 'set — leave empty to keep it' : 'broker password';
+  $('mq_password').placeholder = window.I18n.s(
+    m.password_set ? 'set — leave empty to keep it' : 'broker password');
   $('mq_device').value = m.device_name || '';
 
   const el = $('mq_state');
-  if (!m.enabled) { el.textContent = 'off'; el.className = 'd'; }
+  if (!m.enabled) { el.textContent = window.I18n.s('off'); el.className = 'd'; }
   else if (st.connected) {
     el.textContent = `${window.I18n.s('connected')} · ${st.node_id}`;
     el.className = 'd state-ok';
@@ -240,7 +255,8 @@ function renderTokens(list) {
   const host = $('tokens');
   host.innerHTML = '';
   if (!list.length) {
-    host.innerHTML = '<div class="hintline" style="margin:0">No tokens yet.</div>';
+    host.innerHTML =
+      `<div class="hintline" style="margin:0">${window.I18n.s('No tokens yet.')}</div>`;
     return;
   }
   list.forEach((t) => {
@@ -314,7 +330,8 @@ function renderHooks() {
   host.innerHTML = '';
   const hooks = cfg.backups.webhooks || [];
   if (!hooks.length) {
-    host.innerHTML = '<div class="hintline" style="margin:0">No targets yet.</div>';
+    host.innerHTML =
+      `<div class="hintline" style="margin:0">${window.I18n.s('No targets yet.')}</div>`;
     return;
   }
   hooks.forEach((h, i) => {
@@ -437,7 +454,10 @@ $('bk_push').onclick = async () => {
 function renderLog(lines) {
   const box = $('log');
   box.innerHTML = '';
-  if (!lines.length) { box.textContent = 'the log is empty'; return; }
+  if (!lines.length) {
+    box.textContent = window.I18n.s('the log is empty');
+    return;
+  }
   lines.forEach((line) => {
     const div = document.createElement('div');
     if (line.includes('[ERROR]') || line.includes('[CRITICAL]')) div.className = 'err';
@@ -459,7 +479,7 @@ function renderAutostart(a) {
   $('as_state').textContent = a.installed
     ? `${window.I18n.s('task')} «${a.task}» `
       + window.I18n.s(a.enabled ? 'registered' : 'disabled')
-    : 'off — the remote will not come back after a reboot';
+    : window.I18n.s('off — the remote will not come back after a reboot');
   $('as_cmd').textContent = a.command || '';
   $('as_stale').style.display = a.installed && a.stale ? '' : 'none';
 }
@@ -509,12 +529,13 @@ $('restart').onclick = async () => {
 
 function renderFields() {
   $('pc_name').value = cfg.pc_name || '';
+  $('port').value = cfg.port;
   $('default_delay').value = cfg.default_delay;
   $('delay_choices').value = cfg.delay_choices.join(', ');
   $('allowed_networks').value = cfg.allowed_networks.join('\n');
   $('max_fails').value = cfg.max_fails;
   $('lockout_sec').value = cfg.lockout_sec;
-  ['pc_name', 'default_delay', 'delay_choices', 'allowed_networks',
+  ['pc_name', 'port', 'default_delay', 'delay_choices', 'allowed_networks',
    'max_fails', 'lockout_sec'].forEach((id) => { $(id).oninput = markDirty; });
 }
 
@@ -522,6 +543,7 @@ function collect() {
   const nums = (s) => s.split(/[,\s]+/).filter(Boolean).map(Number).filter((n) => !isNaN(n));
   return {
     pc_name: $('pc_name').value.trim(),
+    port: Math.max(1, Math.min(65535, +$('port').value || 5000)),
     default_delay: Math.max(0, Math.min(600, +$('default_delay').value || 0)),
     delay_choices: nums($('delay_choices').value).slice(0, 6),
     allowed_networks: $('allowed_networks').value.split('\n').map((s) => s.trim()).filter(Boolean),
@@ -589,17 +611,20 @@ async function boot() {
 
 // In the sidebar the buttons carry a label, not just an icon
 window.Theme.bindButton($('theme'), (mode, label) => {
-  $('theme').innerHTML += ` ${window.I18n.s('Theme')}: ${window.I18n.s(label)}`;
+  $('theme').innerHTML +=
+    `<span class="side-label">${window.I18n.s('Theme')}: ${window.I18n.s(label)}</span>`;
 });
 window.I18n.bindButton($('lang'), (lang, name) => {
-  $('lang').innerHTML += ` ${window.I18n.s('Language')}: ${name}`;
+  $('lang').innerHTML +=
+    `<span class="side-label">${window.I18n.s('Language')}: ${name}</span>`;
 });
 
 // The action catalog comes from the server, so refetch after a change
 window.addEventListener('langchange', () => { if (cfg) boot(); });
 
 $('unlock').onclick = tryUnlock;
-$('pwd').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+['pwd', 'pwd2'].forEach((id) =>
+  $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); }));
 
 window.addEventListener('beforeunload', (e) => {
   if (dirty) { e.preventDefault(); e.returnValue = ''; }
@@ -608,8 +633,9 @@ window.addEventListener('beforeunload', (e) => {
 const startTab = location.hash.slice(1);
 if (startTab && document.querySelector(`[data-panel="${startTab}"]`)) showTab(startTab);
 
-if (pwd.v) {
-  boot().catch(() => { $('lock').classList.add('show'); $('pwd').value = pwd.v; });
-} else {
+window.Gate.paint();
+if (window.Gate.needed || !pwd.v) {
   $('lock').classList.add('show');
+} else {
+  boot().catch(() => { $('lock').classList.add('show'); $('pwd').value = pwd.v; });
 }

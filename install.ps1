@@ -59,7 +59,8 @@ try {
          Select-Object -First 1).IPAddress
   Write-Host "  remote:   http://${ip}:$port"
   Write-Host "  settings: http://${ip}:$port/admin"
-  Write-Host "`nChange the password first thing: the default is 'changeme'." -ForegroundColor Yellow
+  Write-Host "`nOpen the remote and pick a password: until it has one," -ForegroundColor Yellow
+  Write-Host "every command is refused." -ForegroundColor Yellow
 } catch {
   Write-Host "`nThe remote did not answer. See $Root\data\server.log" -ForegroundColor Red
   exit 1

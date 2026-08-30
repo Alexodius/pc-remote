@@ -83,8 +83,19 @@ def _monitor_power(on):
 
 
 def _start(target):
+    """Launch a program, or hand a URI to whatever handles it.
+
+    A program starts in its own folder. Without that it inherits the working
+    directory of the remote, and a launcher that expects to sit next to the
+    files it loads — a game, a portable app — finds nothing and fails in a
+    way that looks like the button did nothing at all.
+    """
     try:
-        os.startfile(target)
+        folder = os.path.dirname(target)
+        if os.path.isfile(target) and os.path.isdir(folder):
+            os.startfile(target, cwd=folder)
+        else:
+            os.startfile(target)   # a URI has no folder to start in
         return 0, ""
     except Exception as e:
         return -1, str(e)
@@ -185,6 +196,9 @@ class Action:
     # Custom buttons: the name came from a person, nothing to translate
     fixed_label: str = ""
     fixed_hint: str = ""
+    # The hint is a path on this disk: it goes to the settings page, which
+    # asks for a password, and never to the open catalog
+    private_hint: bool = False
 
     def label(self, lang=None):
         return self.fixed_label or t(f"{self.id}.label", lang)
@@ -267,7 +281,7 @@ def _launchers():
         out.append(Action(
             f"launch:{slug}", item.get("icon") or "app", "apps",
             _wrap(lambda tg=target: _start(tg), "res.launching"),
-            fixed_label=name, fixed_hint=target[:60],
+            fixed_label=name, fixed_hint=target[:60], private_hint=True,
         ))
     return out
 
@@ -293,12 +307,13 @@ def groups(lang=None):
     return [{"id": g, "title": t(f"group.{g}", lang)} for g in GROUPS]
 
 
-def describe(action, lang=None):
-    """What goes to the interface."""
+def describe(action, lang=None, reveal=False):
+    """What goes to the interface. `reveal` is for authenticated callers."""
     return {
         "id": action.id,
         "label": action.label(lang),
-        "hint": action.hint(lang),
+        "hint": action.hint(lang) if reveal or not action.private_hint
+                else t("word.custom_button", lang),
         "icon": action.icon,
         "group": action.group,
         "tone": action.tone,

@@ -22,15 +22,29 @@
 
 <!-- Asked once, then kept in this device's localStorage, so the remote
      opens ready to use. -->
-<div class="lock" id="lock">
+<div class="lock" id="lock" data-setup="{{ 1 if needs_setup else 0 }}">
   <div class="box">
-    <h1>Remote {{ pc }}</h1>
-    <p>Enter the access password — it will be remembered on this device.</p>
+    <div id="view-signin">
+      <h1>Remote {{ pc }}</h1>
+      <p>Enter the access password — it will be remembered on this device.</p>
+    </div>
+    <div id="view-setup" hidden>
+      <h1>Pick a password</h1>
+      <p>Until there is one the remote is not protected at all. Whoever sets
+         it first is the one who can shut this computer down.</p>
+    </div>
     <label class="field">
       <input type="password" id="pwd" placeholder="Password"
              autocomplete="current-password" enterkeyhint="go">
     </label>
-    <button class="btn primary" id="unlock">Sign in</button>
+    <label class="field" id="field-repeat" hidden>
+      <input type="password" id="pwd2" placeholder="Repeat the password"
+             autocomplete="new-password" enterkeyhint="go">
+    </label>
+    <button class="btn primary" id="unlock">
+      <span id="label-signin">Sign in</span>
+      <span id="label-create" hidden>Create</span>
+    </button>
     <div class="hintline" id="lockmsg"></div>
   </div>
 </div>
@@ -89,6 +103,7 @@
     defaultDelay: {{ default_delay | tojson }}
   };
 </script>
+<script src="/static/gate.js?v={{ version }}"></script>
 <script src="/static/remote.js?v={{ version }}"></script>
 </body>
 </html>

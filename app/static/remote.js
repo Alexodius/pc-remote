@@ -59,13 +59,24 @@ async function call(action, extra) {
 function showLock(msg) {
   $('lock').classList.add('show');
   $('lockmsg').textContent = msg || '';
-  $('pwd').value = store.pwd;
+  $('pwd').value = window.Gate.needed ? '' : store.pwd;
   setTimeout(() => $('pwd').focus(), 60);
 }
 
 function hideLock() { $('lock').classList.remove('show'); }
 
 async function tryUnlock() {
+  // Nothing to sign in to yet: the box is creating the password instead
+  if (window.Gate.needed) {
+    const created = await window.Gate.create();
+    if (!created) return;
+    store.pwd = created;
+    hideLock();
+    await loadCatalog();
+    poll();
+    return;
+  }
+
   const value = $('pwd').value.trim();
   if (!value) { $('lockmsg').textContent = window.I18n.s('Enter the password'); return; }
   store.pwd = value;
@@ -280,16 +291,18 @@ window.addEventListener('langchange', async () => {
 });
 
 $('unlock').onclick = tryUnlock;
-$('pwd').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+['pwd', 'pwd2'].forEach((id) =>
+  $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); }));
 
 // Refresh as soon as the tab is visible again: a phone may have slept.
 document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 
+window.Gate.paint();
 paintCountdown();
-if (store.pwd) {
+if (window.Gate.needed || !store.pwd) {
+  showLock();
+} else {
   loadCatalog();
   poll();
-} else {
-  showLock();
 }
 setInterval(poll, 5000);

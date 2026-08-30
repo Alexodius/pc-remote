@@ -14,15 +14,29 @@
 <body>
 {% include "_icons.html" %}
 
-<div class="lock" id="lock">
+<div class="lock" id="lock" data-setup="{{ 1 if needs_setup else 0 }}">
   <div class="box">
-    <h1>Settings</h1>
-    <p>The access password is required.</p>
+    <div id="view-signin">
+      <h1>Settings</h1>
+      <p>The access password is required.</p>
+    </div>
+    <div id="view-setup" hidden>
+      <h1>Pick a password</h1>
+      <p>Until there is one the remote is not protected at all. Whoever sets
+         it first is the one who can shut this computer down.</p>
+    </div>
     <label class="field">
       <input type="password" id="pwd" placeholder="Password"
              autocomplete="current-password" enterkeyhint="go">
     </label>
-    <button class="btn primary" id="unlock">Sign in</button>
+    <label class="field" id="field-repeat" hidden>
+      <input type="password" id="pwd2" placeholder="Repeat the password"
+             autocomplete="new-password" enterkeyhint="go">
+    </label>
+    <button class="btn primary" id="unlock">
+      <span id="label-signin">Sign in</span>
+      <span id="label-create" hidden>Create</span>
+    </button>
     <div class="hintline" id="lockmsg"></div>
   </div>
 </div>
@@ -53,11 +67,14 @@
         <svg><use href="#i-settings"></use></svg> System</button>
     </nav>
     <div class="spacer"></div>
-    <button class="side-link" id="lang" style="border:0;background:none;
-            font-family:inherit;cursor:pointer;text-align:left;width:100%"></button>
-    <button class="side-link" id="theme" style="border:0;background:none;
-            font-family:inherit;cursor:pointer;text-align:left;width:100%"></button>
-    <a class="side-link" href="/"><svg><use href="#i-back"></use></svg> Back to remote</a>
+    <div class="side-tools">
+      <button class="side-link" id="lang"></button>
+      <button class="side-link" id="theme"></button>
+      <a class="side-link" href="/" title="Back to remote">
+        <svg><use href="#i-back"></use></svg>
+        <span class="side-label">Back to remote</span>
+      </a>
+    </div>
   </aside>
 
   <main class="content">
@@ -325,6 +342,14 @@
           <input type="text" id="pc_name" placeholder="{{ pc }}">
         </label>
         <label class="field">
+          <span class="cap">Port</span>
+          <input type="number" id="port" min="1" max="65535">
+          <span class="hintline">
+            Applied after a restart. Bookmarks, the smart home and any
+            integration have to follow it.
+          </span>
+        </label>
+        <label class="field">
           <span class="cap">Default delay, seconds</span>
           <input type="number" id="default_delay" min="0" max="600">
           <span class="hintline">
@@ -389,6 +414,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="/static/gate.js?v={{ version }}"></script>
 <script src="/static/dialog.js?v={{ version }}"></script>
 <script src="/static/admin.js?v={{ version }}"></script>
 </body>
