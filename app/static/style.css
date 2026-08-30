@@ -603,6 +603,90 @@ body.is-offline #delaycard { opacity: .3; pointer-events: none; }
 .pill.ok { color: var(--switch-on); }
 .pill.bad { color: var(--danger); }
 
+/* ---------- modal sheet ---------- */
+
+/* Replaces confirm() and prompt(). <dialog> brings the focus trap, Esc and
+   the top layer; what follows is appearance and the entrance. No shadow,
+   as everywhere else — the depth cue is the dimmed backdrop. */
+
+.sheet {
+  width: min(400px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity .22s var(--ease), transform .22s var(--ease);
+}
+.sheet.in { opacity: 1; transform: none; }
+
+.sheet::backdrop {
+  background: rgba(0, 0, 0, .32);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  opacity: 0;
+  transition: opacity .22s var(--ease);
+}
+.sheet.in::backdrop { opacity: 1; }
+
+.sheet-body {
+  display: flex; flex-direction: column; gap: var(--s-sm);
+  padding: var(--s-lg);
+}
+.sheet-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px; font-weight: 600; letter-spacing: -0.4px; line-height: 1.24;
+}
+.sheet-text {
+  margin: 0;
+  font-size: 15px; color: var(--ink-80);
+  letter-spacing: -0.24px; line-height: 1.4;
+}
+/* user-select: all — one click takes the whole value, which is what the
+   manual fallback needs when the clipboard API is unavailable */
+.sheet-secret {
+  padding: var(--s-sm);
+  border: 1px solid var(--hairline); border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.sheet-secret code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px; word-break: break-all; user-select: all;
+}
+.sheet-actions { display: flex; gap: var(--s-xs); margin-top: var(--s-xxs); }
+.sheet-actions .btn { flex: 1; }
+
+/* ---------- file picker ---------- */
+
+/* The native file input draws an OS button that no theme reaches and no
+   dictionary translates. This is the same control with the real input kept
+   hidden behind it, so the file dialog and its accept filter stay intact. */
+
+.picker {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs);
+  width: 100%; padding: var(--s-md);
+  border: 1px dashed var(--hairline); border-radius: var(--r-lg);
+  background: var(--surface-2); color: var(--ink);
+  font-family: var(--font); text-align: center; cursor: pointer;
+  transition: background-color .22s var(--ease), border-color .22s var(--ease),
+              transform .12s var(--ease);
+}
+.picker svg { width: 22px; height: 22px; color: var(--accent); flex: none; }
+.picker .picker-t { font-size: 15px; font-weight: 600; letter-spacing: -0.24px; }
+.picker .picker-d { font-size: 13px; color: var(--ink-48); letter-spacing: -0.08px; }
+.picker:active { transform: scale(.95); }
+/* Dragging a file over it: the dashes close up into a solid accent edge */
+.picker.over {
+  border-style: solid; border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+@media (hover: hover) {
+  .picker:hover { border-color: var(--accent); }
+}
+
 /* Respect the reduced-motion system setting */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

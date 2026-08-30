@@ -18,7 +18,6 @@
   const NAMES = { en: 'English', ru: 'Русский' };
 
   const RU = {
-    'The access password is required.': 'Нужен пароль доступа.',
     ', status without a password —': ', состояние без пароля —',
     '. Action list —': '. Список действий —',
     '. Full description in the project README.': '. Полное описание в README проекта.',
@@ -32,6 +31,8 @@
     'Actions enabled': 'Действий включено',
     'Address': 'Адрес',
     'Allowed networks': 'Разрешённые сети',
+    'Anything using "%s" stops working immediately.':
+      'Всё, что пользуется токеном «%s», сразу перестанет работать.',
     'At least 4 characters': 'Минимум 4 символа',
     'At least one delay option is required': 'Нужен хотя бы один вариант задержки',
     'Autostart': 'Автозапуск',
@@ -50,17 +51,22 @@
       'Смена пароля разлогинит все устройства, где он сохранён, и сломает интеграции, которые ходят с ним же. Чтобы этого не случалось, переведите их на токены во вкладке «Интеграции».',
     'Checking the connection…': 'Проверяю связь…',
     'Checking…': 'Проверяю…',
+    'Choose a backup file': 'Выберите файл резервной копии',
     'Computer': 'Компьютер',
     'Computer name in the interface': 'Имя компьютера в интерфейсе',
-    'Copy the token — it will not be shown again:':
-      'Скопируйте токен — второй раз он не покажется:',
+    'Copied': 'Скопировано',
+    'Copy': 'Скопировать',
+    'Copy the token now': 'Скопируйте токен сейчас',
     'Could not read the file': 'Не разобрал файл',
+    'Current settings will be replaced by the ones in "%s".':
+      'Текущие настройки будут заменены теми, что в «%s».',
     'Custom launch buttons': 'Свои кнопки запуска',
     'Default delay, seconds': 'Задержка по умолчанию, секунд',
     'Delay before shutdown': 'Задержка перед выключением',
     'Delay options on the remote': 'Варианты задержки на пульте',
     'Describe what the token is for': 'Напишите, для чего токен',
     'Device name in the smart home': 'Имя устройства в умном доме',
+    'Done': 'Готово',
     'Download a backup': 'Скачать копию',
     'Enter the access password — it will be remembered on this device.':
       'Введите пароль доступа — он запомнится на этом устройстве.',
@@ -75,6 +81,8 @@
     'Include password and tokens': 'Включить пароль и токены',
     'Integrations': 'Интеграции',
     'Issue': 'Выпустить',
+    'It is shown once and cannot be retrieved later.':
+      'Он показывается один раз, потом получить его будет негде.',
     'Language': 'Язык',
     'Lockout, seconds': 'Блокировка, секунд',
     'Log': 'Журнал',
@@ -90,6 +98,7 @@
     'No targets yet.': 'Адресов пока нет.',
     'No tokens yet.': 'Токенов пока нет.',
     'Nothing yet.': 'Пока пусто.',
+    'OK': 'ОК',
     'One per line. Anything outside the list is refused — even if the port gets exposed by accident.':
       'По одной на строку. Всё, что не попало в список, получает отказ — даже если порт случайно пробросят наружу.',
     'Overview': 'Обзор',
@@ -101,20 +110,25 @@
     'Remote': 'Пульт',
     'Remote ·': 'Пульт ·',
     'Restart': 'Перезапуск',
+    'Restart now': 'Перезапустить',
     'Restart the remote': 'Перезапустить пульт',
+    'Restart without saving?': 'Перезапустить без сохранения?',
     'Restarting in': 'Перезагрузка через',
     'Restarting, back in a couple of seconds': 'Перезапускаюсь, вернусь через пару секунд',
+    'Restore': 'Восстановить',
     'Restore from a file': 'Восстановить из файла',
-    'Restore settings from this file? The current ones will be replaced.':
-      'Восстановить настройки из этого файла? Текущие будут заменены.',
+    'Restore from this file?': 'Восстановить из этого файла?',
     'Restoring applies the settings and requires a restart. If the backup had no secrets, the current password stays as it is.':
       'Восстановление применяет настройки и требует перезапуска. Если в копии не было секретов, действующий пароль останется прежним.',
+    'Revoke': 'Отозвать',
+    'Revoke this token?': 'Отозвать этот токен?',
     'Right-click menu with actions. Requires a restart.':
       'Меню действий по правому клику. Нужен перезапуск.',
     'Save changes': 'Сохранить изменения',
     'Save your changes first': 'Сначала сохраните изменения',
     'Saved': 'Сохранено',
     'Saved. A restart is required.': 'Сохранено. Нужен перезапуск.',
+    'Select it and copy by hand': 'Выделите и скопируйте вручную',
     'Send now': 'Отправить сейчас',
     'Send on a schedule': 'Отправлять по расписанию',
     'Sending to external targets': 'Отправка на внешние адреса',
@@ -133,6 +147,7 @@
     'Startup': 'Запуск',
     'Sure?': 'Точно?',
     'System': 'Система',
+    'The access password is required.': 'Нужен пароль доступа.',
     'The autostart task points elsewhere: the project probably moved or the interpreter changed. The remote will not come back after a reboot.':
       'Задача автозапуска ведёт не туда: похоже, проект переехал или сменился интерпретатор. После перезагрузки пульт не поднимется.',
     'The backup is sent as a POST with a JSON body. Any receiver will do: object storage behind your own gateway, a NAS, a hypervisor, an automation webhook.':
@@ -144,8 +159,8 @@
     'The password did not work': 'Пароль не подошёл',
     'The password is set by the environment variable': 'Пароль задан переменной окружения',
     'Theme': 'Тема',
-    'There are unsaved changes and they will be lost. Restart anyway?':
-      'Есть несохранённые изменения, они пропадут. Перезапустить?',
+    'There are unsaved changes and they will be lost.':
+      'Есть несохранённые изменения, они будут потеряны.',
     'Token issued': 'Токен выпущен',
     'Token not found': 'Токен не найден',
     'Token revoked': 'Токен отозван',
@@ -197,6 +212,7 @@
     'online': 'в сети',
     'or a full path to a program. This runs arbitrary code: enable it deliberately and only with a strong password.':
       'или полный путь до программы. Это запуск произвольного кода: включайте осознанно и только со стойким паролем.',
+    'or drag one here': 'или перетащите его сюда',
     'path or URI': 'путь или URI',
     'registered': 'зарегистрирована',
     's': 'с',
@@ -227,18 +243,29 @@
   const FLAT = {};
   Object.keys(RU).forEach((k) => { FLAT[k.replace(/\s+/g, ' ').trim()] = RU[k]; });
 
-  /** Translate one string. Not in the dictionary means returned unchanged. */
-  function s(text) {
-    if (read() === 'en') return text;
+  /** Fill %s placeholders left to right. */
+  function fill(text, args) {
+    let i = 0;
+    return text.replace(/%s/g, () => (i < args.length ? String(args[i++]) : '%s'));
+  }
+
+  /* Translate one string. Not in the dictionary means returned unchanged.
+
+     Values belong in args rather than in the text: interpolating a name into
+     the string first would make every call its own key, and a key with a name
+     baked into it can never be in the dictionary. */
+  function s(text, ...args) {
     const raw = String(text);
+    const done = (v) => (args.length ? fill(v, args) : v);
+    if (read() === 'en') return done(raw);
     const flat = raw.replace(/\s+/g, ' ').trim();
     if (!flat) return raw;
     const hit = FLAT[flat];
-    if (!hit) return raw;
+    if (!hit) return done(raw);
     // Keep leading and trailing whitespace: the layout leans on it
     const lead = raw.match(/^\s*/)[0];
     const tail = raw.match(/\s*$/)[0];
-    return lead + hit + tail;
+    return done(lead + hit + tail);
   }
 
   const ORIGIN = new WeakMap();

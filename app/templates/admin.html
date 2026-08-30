@@ -260,7 +260,12 @@
           <span class="cap" style="color:var(--ink-48);font-size:13px;display:block;margin-bottom:6px">
             Restore from a file
           </span>
-          <input type="file" id="bk_file" accept="application/json,.json">
+          <input type="file" id="bk_file" accept="application/json,.json" hidden>
+          <button type="button" class="picker" id="bk_pick">
+            <svg><use href="#i-upload"></use></svg>
+            <span class="picker-t">Choose a backup file</span>
+            <span class="picker-d">or drag one here</span>
+          </button>
         </div>
         <div class="hintline">
           Restoring applies the settings and requires a restart. If the backup
@@ -384,6 +389,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="/static/dialog.js?v={{ version }}"></script>
 <script src="/static/admin.js?v={{ version }}"></script>
 </body>
 </html>

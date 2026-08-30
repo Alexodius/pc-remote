@@ -46,6 +46,28 @@ on any surface.
 
 All motion is disabled when the system asks for reduced motion.
 
+## Dialogs
+
+**Nothing the browser draws itself.** `confirm()` and `prompt()` ignore the
+theme, cannot be translated and sit in the middle of the window in a font
+nobody chose. Every question the interface asks is its own sheet, built on
+`<dialog>` so the focus trap, Esc and the top layer come from the platform
+rather than from code.
+
+**Enter confirms, so focus decides what Enter does.** On a reversible action
+the confirming button holds it; on an irreversible one — revoking a token,
+restoring over the current settings — focus starts on Cancel. Pressing Enter
+by reflex must not be the thing that destroys something.
+
+**A sheet has no shadow either.** The dimmed, blurred backdrop is the depth
+cue. It enters at `scale(.96)` over 220ms and leaves the same way, and the
+promise resolves only after it has gone, so two sheets can never overlap.
+
+**The file field is ours as well.** The native one renders as an operating
+system button in the system's own language, immune to both the theme and the
+dictionary. The real input stays in the markup, hidden: the file dialog and
+its filter are the browser's job, the control on the page is not.
+
 ## Layout
 
 A phone gets one column. From 900px the status moves to a sticky left column

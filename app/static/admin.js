@@ -258,8 +258,16 @@ function renderTokens(list) {
     del.textContent = '×';
     del.title = 'Revoke';
     del.onclick = async () => {
-      if (!confirm(window.I18n.s(
-        `Revoke the token "${t.name}"? Anything using it stops working.`))) return;
+      const ok = await Dialog.confirm({
+        title: 'Revoke this token?',
+        // The name goes through %s: interpolating it into the key would
+        // make every token its own untranslatable string
+        body: 'Anything using "%s" stops working immediately.',
+        args: [t.name],
+        ok: 'Revoke',
+        danger: true,
+      });
+      if (!ok) return;
       try {
         const r = await api('token_revoke', { id: t.id });
         renderTokens(r.tokens);
@@ -280,7 +288,11 @@ $('tok_add').onclick = async () => {
     $('tok_name').value = '';
     renderTokens(r.tokens);
     // Shown exactly once; there is no way to retrieve it later
-    prompt('Copy the token — it will not be shown again:', r.token);
+    await Dialog.reveal({
+      title: 'Copy the token now',
+      body: 'It is shown once and cannot be retrieved later.',
+      secret: r.token,
+    });
     toast(r.result, 'good');
   } catch (e) { toast(e.message, 'err'); }
 };
@@ -350,13 +362,20 @@ $('bk_download').onclick = async () => {
   } catch (e) { toast(e.message, 'err'); }
 };
 
-$('bk_file').onchange = async (e) => {
-  const file = e.target.files[0];
+/* The real <input type="file"> stays in the markup but hidden: the file
+   dialog and its accept filter are the browser's job, only the control
+   drawn on the page is ours. Dropping a file works as well as picking one. */
+
+async function restoreFrom(file) {
   if (!file) return;
-  if (!confirm(window.I18n.s('Restore settings from this file? The current ones will be replaced.'))) {
-    e.target.value = '';
-    return;
-  }
+  const ok = await Dialog.confirm({
+    title: 'Restore from this file?',
+    body: 'Current settings will be replaced by the ones in "%s".',
+    args: [file.name],
+    ok: 'Restore',
+    danger: true,
+  });
+  if (!ok) return;
   try {
     const payload = JSON.parse(await file.text());
     const r = await api('backup_import', { payload });
@@ -366,10 +385,39 @@ $('bk_file').onchange = async (e) => {
     await boot();
   } catch (err) {
     toast(err.message || 'Could not read the file', 'err');
-  } finally {
-    e.target.value = '';
   }
+}
+
+$('bk_pick').onclick = () => $('bk_file').click();
+
+$('bk_file').onchange = async (e) => {
+  const file = e.target.files[0];
+  // Cleared before the await: picking the same file twice in a row fires
+  // no change event otherwise
+  e.target.value = '';
+  await restoreFrom(file);
 };
+
+['dragenter', 'dragover'].forEach((type) =>
+  $('bk_pick').addEventListener(type, (e) => {
+    e.preventDefault();
+    $('bk_pick').classList.add('over');
+  }));
+
+['dragleave', 'dragend', 'drop'].forEach((type) =>
+  $('bk_pick').addEventListener(type, () => $('bk_pick').classList.remove('over')));
+
+$('bk_pick').addEventListener('drop', async (e) => {
+  e.preventDefault();
+  await restoreFrom(e.dataTransfer.files[0]);
+});
+
+// Without this the browser navigates away to the dropped file, discarding
+// the page and any unsaved settings on it
+['dragover', 'drop'].forEach((type) =>
+  window.addEventListener(type, (e) => {
+    if (!$('bk_pick').contains(e.target)) e.preventDefault();
+  }));
 
 $('bk_push').onclick = async () => {
   if (dirty) { toast('Save your changes first', 'err'); return; }
@@ -444,7 +492,15 @@ $('setpwd').onclick = async () => {
 };
 
 $('restart').onclick = async () => {
-  if (dirty && !confirm(window.I18n.s('There are unsaved changes and they will be lost. Restart anyway?'))) return;
+  if (dirty) {
+    const ok = await Dialog.confirm({
+      title: 'Restart without saving?',
+      body: 'There are unsaved changes and they will be lost.',
+      ok: 'Restart now',
+      danger: true,
+    });
+    if (!ok) return;
+  }
   try { toast((await api('restart')).result, 'good'); }
   catch (e) { toast(e.message, 'err'); }
 };

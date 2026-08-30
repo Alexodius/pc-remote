@@ -64,13 +64,34 @@ def visible_strings(path):
     return [s for s in out if translatable(s)]
 
 
+QUOTED = r"'((?:[^'\\]|\\.)*)'"
+
+# Every position a visible string can occupy in the scripts. Dialog specs are
+# listed because the token confirmation once carried the token name inside the
+# key itself, and no dictionary can ever match a key like that.
+SCRIPT_PATTERNS = (
+    r"I18n\.s\(\s*" + QUOTED,
+    r"toast\(\s*" + QUOTED,
+    r"\bt\(\s*" + QUOTED,                  # the shorthand inside dialog.js
+    r"(?:title|body|ok):\s*" + QUOTED,     # Dialog specs
+    r"\.title\s*=\s*" + QUOTED,            # tooltips
+)
+
+
 def script_strings(path):
     src = open(path, encoding="utf-8").read()
     out = []
-    for pattern in (r"I18n\.s\(\s*'((?:[^'\\]|\\.)*)'",
-                    r"toast\(\s*'((?:[^'\\]|\\.)*)'"):
+    for pattern in SCRIPT_PATTERNS:
         out += [flat(m.group(1)) for m in re.finditer(pattern, src)]
     return [s for s in out if translatable(s)]
+
+
+def entries():
+    """Dictionary keys, in the order they appear in the file."""
+    src = open(os.path.join(APP, "static", "i18n.js"), encoding="utf-8").read()
+    start = src.index("const RU = {")
+    body = src[start:src.index("\n  };", start)]
+    return [m.group(1) for m in re.finditer(r"\n    " + QUOTED + r"\s*:", body)]
 
 
 class TestInterfaceTranslations(Base):
@@ -92,8 +113,33 @@ class TestInterfaceTranslations(Base):
                     "admin.html")
 
     def test_scripts_are_translated(self):
-        for name in ("remote.js", "admin.js"):
+        for name in ("remote.js", "admin.js", "dialog.js"):
             self._check(script_strings(os.path.join(APP, "static", name)), name)
+
+    def test_dictionary_is_sorted(self):
+        # Out of order it stops being readable by eye, and a duplicate key
+        # silently shadows the one above it
+        keys = entries()
+        self.assertEqual(keys, sorted(keys), "the dictionary is out of order")
+
+    def test_no_duplicate_keys(self):
+        keys = entries()
+        dupes = sorted({k for k in keys if keys.count(k) > 1})
+        self.assertEqual(dupes, [], f"duplicate keys: {dupes}")
+
+    def test_placeholder_counts_match(self):
+        # A translation that lost its %s drops the value silently, and only
+        # in one of the languages
+        src = open(os.path.join(APP, "static", "i18n.js"), encoding="utf-8").read()
+        start = src.index("const RU = {")
+        body = src[start:src.index("\n  };", start)]
+        pairs = re.findall(r"\n    " + QUOTED + r"\s*:\s*\n?\s*" + QUOTED, body)
+        checked = 0
+        for key, value in pairs:
+            if "%s" in key or "%s" in value:
+                self.assertEqual(key.count("%s"), value.count("%s"), key)
+                checked += 1
+        self.assertGreater(checked, 0, "the %s check found nothing to check")
 
     def test_dictionary_has_no_empty_values(self):
         src = open(os.path.join(APP, "static", "i18n.js"), encoding="utf-8").read()
