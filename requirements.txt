@@ -1,0 +1,7 @@
+flask>=3.0
+waitress>=3.0
+
+# Optional. Each feature checks its import and degrades instead of failing.
+paho-mqtt>=2.0     # MQTT bridge with smart-home auto-discovery
+pystray>=0.19      # Windows tray icon
+pillow>=10.0       # draws the tray icon

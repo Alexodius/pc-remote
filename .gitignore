@@ -1,0 +1,27 @@
+# Per-machine settings, state and logs. Holds the password — never committed.
+data/
+
+# PyInstaller
+build/
+dist/
+*.manifest
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Scratch
+*.tmp
+*.bak
+*.log

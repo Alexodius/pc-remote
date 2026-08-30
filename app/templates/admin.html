@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/style.css?v={{ version }}">
+<script src="/static/theme.js?v={{ version }}"></script>
+<script src="/static/i18n.js?v={{ version }}"></script>
+<title>Settings · {{ pc }}</title>
+</head>
+<body>
+{% include "_icons.html" %}
+
+<div class="lock" id="lock">
+  <div class="box">
+    <h1>Settings</h1>
+    <p>The access password is required.</p>
+    <label class="field">
+      <input type="password" id="pwd" placeholder="Password"
+             autocomplete="current-password" enterkeyhint="go">
+    </label>
+    <button class="btn primary" id="unlock">Sign in</button>
+    <div class="hintline" id="lockmsg"></div>
+  </div>
+</div>
+
+<div class="shell" id="body" style="display:none">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><svg><use href="#i-power"></use></svg></div>
+      <div>
+        <div class="bname">pc-remote</div>
+        <div class="baddr" id="brand_addr">{{ pc }}</div>
+      </div>
+    </div>
+    <nav id="tabs">
+      <button data-tab="overview" aria-selected="true">
+        <svg><use href="#i-gauge"></use></svg> Overview</button>
+      <button data-tab="actions">
+        <svg><use href="#i-power"></use></svg> Actions</button>
+      <button data-tab="integrations">
+        <svg><use href="#i-broker"></use></svg> Integrations</button>
+      <button data-tab="access">
+        <svg><use href="#i-lock"></use></svg> Access</button>
+      <button data-tab="backup">
+        <svg><use href="#i-backup"></use></svg> Backups</button>
+      <button data-tab="log">
+        <svg><use href="#i-list"></use></svg> Log</button>
+      <button data-tab="system">
+        <svg><use href="#i-settings"></use></svg> System</button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="side-link" id="lang" style="border:0;background:none;
+            font-family:inherit;cursor:pointer;text-align:left;width:100%"></button>
+    <button class="side-link" id="theme" style="border:0;background:none;
+            font-family:inherit;cursor:pointer;text-align:left;width:100%"></button>
+    <a class="side-link" href="/"><svg><use href="#i-back"></use></svg> Back to remote</a>
+  </aside>
+
+  <main class="content">
+   <div class="inner">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="panel active" data-panel="overview">
+      <h2>Overview</h2>
+      <p class="lede">What is going on with the remote.</p>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="grouptitle">Service status</div>
+      <div class="card">
+        <div class="row">
+          <svg class="lead"><use href="#i-startup"></use></svg>
+          <div class="grow"><div class="t">Autostart</div>
+            <div class="d" id="ov_autostart">—</div></div>
+        </div>
+        <div class="row">
+          <svg class="lead"><use href="#i-broker"></use></svg>
+          <div class="grow"><div class="t">MQTT bridge</div>
+            <div class="d" id="ov_mqtt">—</div></div>
+        </div>
+        <div class="row">
+          <svg class="lead"><use href="#i-tray"></use></svg>
+          <div class="grow"><div class="t">Tray icon</div>
+            <div class="d" id="ov_tray">—</div></div>
+        </div>
+        <div class="row">
+          <svg class="lead"><use href="#i-backup"></use></svg>
+          <div class="grow"><div class="t">Backups</div>
+            <div class="d" id="ov_backup">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ACTIONS ============ -->
+    <section class="panel" data-panel="actions">
+      <h2>Actions</h2>
+      <p class="lede">What the remote shows and what the API exposes.</p>
+
+      <div class="card" id="actions_list"></div>
+      <div class="hintline" style="margin: 0 var(--s-md)">
+        Shutdown, restart and cancel cannot be disabled: external integrations
+        usually depend on them, and their disappearance breaks automations silently.
+      </div>
+
+      <div class="grouptitle">Custom launch buttons</div>
+      <div class="card">
+        <div id="launchers"></div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <input type="text" id="l_name" placeholder="Name">
+          <input type="text" id="l_target" placeholder="path or URI">
+          <button class="btn" id="l_add" style="width:auto;padding:0 18px">+</button>
+        </div>
+        <div class="hintline">
+          For example <code>steam://open/bigpicture</code>
+          or a full path to a program. This runs arbitrary code: enable it
+          deliberately and only with a strong password.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INTEGRATIONS ============ -->
+    <section class="panel" data-panel="integrations">
+      <h2>Integrations</h2>
+      <p class="lede">How your smart home and scripts talk to the remote.</p>
+
+      <div class="grouptitle">MQTT with auto-discovery</div>
+      <div class="card">
+        <div class="row">
+          <svg class="lead"><use href="#i-broker"></use></svg>
+          <div class="grow">
+            <div class="t">MQTT bridge</div>
+            <div class="d" id="mq_state">checking…</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="mq_enabled"><span></span></label>
+        </div>
+        <div id="mq_fields" style="display:none;margin-top:14px">
+          <label class="field">
+            <span class="cap">Broker address</span>
+            <input type="text" id="mq_host" placeholder="192.168.1.10" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="cap">Port</span>
+            <input type="number" id="mq_port" min="1" max="65535">
+          </label>
+          <label class="field">
+            <span class="cap">Username</span>
+            <input type="text" id="mq_username" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="cap">Password</span>
+            <input type="password" id="mq_password" autocomplete="new-password"
+                   placeholder="leave empty to keep the current one">
+          </label>
+          <label class="field">
+            <span class="cap">Device name in the smart home</span>
+            <input type="text" id="mq_device" placeholder="{{ pc }}">
+          </label>
+          <button class="btn" id="mq_test">Reconnect</button>
+          <div class="hintline" id="mq_topics" style="word-break:break-all"></div>
+        </div>
+        <div class="hintline">
+          Your smart home will create a device with every button and sensor by
+          itself — no manual definitions needed. State is pushed the moment it
+          changes, and if the computer dies suddenly, the broker announces it
+          offline for us.
+        </div>
+      </div>
+
+      <div class="grouptitle">Tokens</div>
+      <div class="card">
+        <div id="tokens"></div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <input type="text" id="tok_name" placeholder="What is it for">
+          <button class="btn" id="tok_add" style="width:auto;padding:0 18px">Issue</button>
+        </div>
+        <div class="hintline">
+          A token is a password for machines. Connect integrations with one
+          instead of your own password, and changing that password will not
+          break them all at once. Works anywhere a password is accepted, plus
+          as a header <code>Authorization: Bearer …</code>.
+        </div>
+      </div>
+
+      <div class="grouptitle">HTTP API</div>
+      <div class="card">
+        <div class="hintline" style="margin:0">
+          <code>POST /api</code> with body
+          <code>{"password": "…", "action": "shutdown", "delay": 30}</code>.
+          Action list — <code>GET /actions</code>, status without a password —
+          <code>GET /healthz</code>. Full description in the project README.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ACCESS ============ -->
+    <section class="panel" data-panel="access">
+      <h2>Access</h2>
+      <p class="lede">Who is allowed in, and what happens to password guessers.</p>
+
+      <div class="card">
+        <label class="field">
+          <span class="cap">Allowed networks</span>
+          <textarea id="allowed_networks" spellcheck="false"></textarea>
+          <span class="hintline">
+            One per line. Anything outside the list is refused — even if the
+            port gets exposed by accident.
+          </span>
+        </label>
+        <label class="field">
+          <span class="cap">Failed attempts before lockout</span>
+          <input type="number" id="max_fails" min="1" max="100">
+        </label>
+        <label class="field" style="margin-bottom:0">
+          <span class="cap">Lockout, seconds</span>
+          <input type="number" id="lockout_sec" min="10" max="86400">
+        </label>
+      </div>
+
+      <div class="grouptitle">Password</div>
+      <div class="card">
+        <div class="hintline" id="envnote" style="display:none;margin:0 0 10px">
+          The password is set by the environment variable
+          <code>REMOTE_WIN11_PASSWORD</code>
+          — it takes precedence over the file, so changing it here has no effect.
+        </div>
+        <label class="field">
+          <span class="cap">New password</span>
+          <input type="text" id="newpwd" autocomplete="new-password" spellcheck="false">
+        </label>
+        <button class="btn" id="setpwd">Change password</button>
+        <div class="hintline">
+          Changing the password signs out every device that remembered it and
+          breaks integrations using it. To avoid that, move them to tokens on
+          the Integrations tab.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BACKUPS ============ -->
+    <section class="panel" data-panel="backup">
+      <h2>Backups</h2>
+      <p class="lede">Settings pile up over months and vanish in a single reinstall.</p>
+
+      <div class="card">
+        <button class="btn primary" id="bk_download">
+          <svg><use href="#i-download"></use></svg> Download a backup
+        </button>
+        <label class="row" style="margin-top:12px">
+          <div class="grow">
+            <div class="t">Include password and tokens</div>
+            <div class="d">Needed when moving to another machine</div>
+          </div>
+          <span class="sw"><input type="checkbox" id="bk_secrets"><span></span></span>
+        </label>
+        <div style="margin-top:12px">
+          <span class="cap" style="color:var(--ink-48);font-size:13px;display:block;margin-bottom:6px">
+            Restore from a file
+          </span>
+          <input type="file" id="bk_file" accept="application/json,.json">
+        </div>
+        <div class="hintline">
+          Restoring applies the settings and requires a restart. If the backup
+          had no secrets, the current password stays as it is.
+        </div>
+      </div>
+
+      <div class="grouptitle">Sending to external targets</div>
+      <div class="card">
+        <div id="hooks"></div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <input type="text" id="hk_name" placeholder="Name">
+          <input type="text" id="hk_url" placeholder="https://…" spellcheck="false">
+          <button class="btn" id="hk_add" style="width:auto;padding:0 18px">+</button>
+        </div>
+        <div class="hintline">
+          The backup is sent as a POST with a JSON body. Any receiver will do:
+          object storage behind your own gateway, a NAS, a hypervisor, an
+          automation webhook.
+        </div>
+        <div class="row" style="margin-top:14px">
+          <div class="grow">
+            <div class="t">Send on a schedule</div>
+            <div class="d" id="bk_last">—</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="bk_auto"><span></span></label>
+        </div>
+        <label class="field" style="margin:12px 0 0">
+          <span class="cap">How often, hours</span>
+          <input type="number" id="bk_interval" min="1" max="720">
+        </label>
+        <button class="btn ghost" id="bk_push" style="margin-top:12px">Send now</button>
+      </div>
+    </section>
+
+    <!-- ============ LOG ============ -->
+    <section class="panel" data-panel="log">
+      <h2>Log</h2>
+      <p class="lede">The only place that shows what the remote did and where it failed.</p>
+      <div class="card">
+        <div class="logbox" id="log">loading…</div>
+        <button class="btn ghost" id="logrefresh" style="margin-top:12px">
+          <svg><use href="#i-refresh"></use></svg> Refresh
+        </button>
+        <div class="hintline" id="logpath" style="word-break:break-all"></div>
+      </div>
+    </section>
+
+    <!-- ============ SYSTEM ============ -->
+    <section class="panel" data-panel="system">
+      <h2>System</h2>
+      <p class="lede">What the remote is called, when it starts and how to restart it.</p>
+
+      <div class="card">
+        <label class="field">
+          <span class="cap">Computer name in the interface</span>
+          <input type="text" id="pc_name" placeholder="{{ pc }}">
+        </label>
+        <label class="field">
+          <span class="cap">Default delay, seconds</span>
+          <input type="number" id="default_delay" min="0" max="600">
+          <span class="hintline">
+            Used whenever the delay is not given explicitly, including calls
+            from outside. Change with care.
+          </span>
+        </label>
+        <label class="field" style="margin-bottom:0">
+          <span class="cap">Delay options on the remote</span>
+          <input type="text" id="delay_choices" placeholder="0, 10, 30, 60">
+        </label>
+      </div>
+
+      <div class="grouptitle">Startup</div>
+      <div class="card">
+        <div class="row">
+          <svg class="lead"><use href="#i-startup"></use></svg>
+          <div class="grow">
+            <div class="t">Start at sign-in</div>
+            <div class="d" id="as_state">checking…</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="as_toggle"><span></span></label>
+        </div>
+        <div class="row">
+          <svg class="lead"><use href="#i-tray"></use></svg>
+          <div class="grow">
+            <div class="t">Tray icon</div>
+            <div class="d">Right-click menu with actions. Requires a restart.</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="tray_toggle"><span></span></label>
+        </div>
+        <div class="hintline" id="as_cmd" style="word-break:break-all"></div>
+        <div id="as_stale" style="display:none;margin-top:10px">
+          <div class="hintline" style="color:var(--danger);margin:0 0 8px">
+            The autostart task points elsewhere: the project probably moved or
+            the interpreter changed. The remote will not come back after a reboot.
+          </div>
+          <button class="btn" id="as_fix">Re-register</button>
+        </div>
+      </div>
+
+      <div class="grouptitle danger-zone">Restart</div>
+      <div class="card">
+        <button class="btn ghost" id="restart">
+          <svg><use href="#i-restart"></use></svg> Restart the remote
+        </button>
+        <div class="hintline">
+          Needed after changing the port, restoring a backup, or toggling the
+          tray icon.
+        </div>
+      </div>
+    </section>
+
+   </div>
+  </main>
+</div>
+
+<div class="savebar" id="savebar">
+  <div class="inner">
+    <button class="btn primary" id="save">Save changes</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/static/admin.js?v={{ version }}"></script>
+</body>
+</html>

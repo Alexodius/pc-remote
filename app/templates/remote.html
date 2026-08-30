@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg">
+<link rel="apple-touch-icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/style.css?v={{ version }}">
+<!-- Before paint: otherwise a dark page flashes white -->
+<script src="/static/theme.js?v={{ version }}"></script>
+<script src="/static/i18n.js?v={{ version }}"></script>
+<title>Remote · {{ pc }}</title>
+</head>
+<body>
+{% include "_icons.html" %}
+
+<!-- Asked once, then kept in this device's localStorage, so the remote
+     opens ready to use. -->
+<div class="lock" id="lock">
+  <div class="box">
+    <h1>Remote {{ pc }}</h1>
+    <p>Enter the access password — it will be remembered on this device.</p>
+    <label class="field">
+      <input type="password" id="pwd" placeholder="Password"
+             autocomplete="current-password" enterkeyhint="go">
+    </label>
+    <button class="btn primary" id="unlock">Sign in</button>
+    <div class="hintline" id="lockmsg"></div>
+  </div>
+</div>
+
+<!-- One column on a phone. From tablet width the status moves to a sticky
+     left column and the actions take the space that frees up. -->
+<div class="wrap">
+  <header class="top">
+    <span class="dot" id="dot"></span>
+    <div class="grow">
+      <div class="name">{{ pc }}</div>
+      <div class="sub" id="sub">connecting…</div>
+    </div>
+    <button class="iconbtn" id="lang"></button>
+    <button class="iconbtn themebtn" id="theme"></button>
+    <a class="iconbtn" href="/admin" title="Settings">
+      <svg width="19" height="19"><use href="#i-settings"></use></svg>
+    </a>
+  </header>
+
+  <div class="col-a">
+    <!-- While counting down this takes the top of the screen, so cancelling
+         needs no aiming -->
+    <section class="countdown" id="cd">
+      <div class="what" id="cdwhat">Shutting down in</div>
+      <div class="num" id="cdnum">30</div>
+      <button class="btn primary" id="cdcancel">
+        <svg><use href="#i-cancel"></use></svg> CANCEL
+      </button>
+    </section>
+
+    <div class="offline" id="offline">
+      The computer is not responding.<br><span id="offlinesub">Checking the connection…</span>
+    </div>
+
+    <div class="card" id="delaycard">
+      <span class="cap" style="color:var(--ink-48);font-size:13px;display:block;margin-bottom:8px">
+        Delay before shutdown
+      </span>
+      <div class="seg" id="seg"></div>
+    </div>
+
+    <div class="hintline" style="text-align:center">pc-remote {{ version }}</div>
+  </div>
+
+  <div class="col-b actions-area" id="area">
+    <div id="groups"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  window.PC = {
+    delays: {{ delays | tojson }},
+    defaultDelay: {{ default_delay | tojson }}
+  };
+</script>
+<script src="/static/remote.js?v={{ version }}"></script>
+</body>
+</html>

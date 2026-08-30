@@ -1,0 +1,9 @@
+# One line ending in the repository; Windows checkouts get their own.
+* text=auto eol=lf
+
+# PowerShell scripts stay CRLF: Windows PowerShell is happier that way.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+*.png binary
+*.ico binary

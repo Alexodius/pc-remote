@@ -1,0 +1,630 @@
+/* pc-remote — styling. The reasoning lives in docs/design.md.
+
+   In short: one accent colour for the whole system, scale(0.95) on press,
+   a 2px focus ring, hairline borders instead of shadows, the 300/400/600/700
+   weight ladder with no 500, and 17px body text.
+
+   Hover is colour-only and gated behind @media (hover: hover) so the state
+   does not stick after a tap on a phone. */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- the single accent --- */
+  --accent: #0066cc;        /* colors.primary */
+  --accent-press: #0071e3;  /* focus and hover */
+  --danger: #d70015;        /* irreversible actions only */
+
+  /* --- surfaces --- */
+  --bg: #f5f5f7;            /* canvas-parchment */
+  --surface: #ffffff;       /* canvas */
+  --surface-2: #fafafc;     /* surface-pearl */
+  --hairline: rgba(0, 0, 0, .08);
+  --divider: #f0f0f0;
+
+  /* --- text --- */
+  --ink: #1d1d1f;
+  --ink-80: #333333;
+  --ink-48: #7a7a7a;
+  --on-accent: #ffffff;
+  --switch-on: #34c759;
+
+  /* --- radii: sm for utility, lg for cards, pill for actions --- */
+  --r-xs: 5px;
+  --r-sm: 8px;
+  --r-md: 11px;
+  --r-lg: 18px;
+  --r-pill: 9999px;
+
+  /* --- spacing scale --- */
+  --s-xxs: 4px;
+  --s-xs: 8px;
+  --s-sm: 12px;
+  --s-md: 17px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+
+  --tap: 50px;              /* 44 is the documented minimum */
+
+  /* On a phone -apple-system resolves to the real SF Pro, and the phone is
+     the primary client here. No web font is loaded: the remote must open
+     without internet access. */
+  --font: -apple-system, BlinkMacSystemFont, system-ui,
+          "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, system-ui,
+          "Segoe UI Variable Display", "Segoe UI", sans-serif;
+
+  --ease: cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Dark values are declared twice: once for the system setting and once for
+   an explicit choice. CSS cannot reference another block, and copying
+   thirteen variables is cheaper than a JavaScript shim.
+   :not([data-theme="light"]) lets an explicit light choice win over a dark
+   system theme. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent: #2997ff;      /* the light-mode blue sinks into a dark surface */
+    --accent-press: #58aeff;
+    --danger: #ff453a;
+
+    --bg: #000000;          /* colors.surface-black */
+    --surface: #1c1c1e;
+    --surface-2: #2a2a2c;   /* colors.surface-tile-2 */
+    --hairline: rgba(255, 255, 255, .1);
+    --divider: #2c2c2e;
+
+    --ink: #ffffff;
+    --ink-80: #d8d8dc;
+    --ink-48: #8e8e93;
+  }
+}
+
+:root[data-theme="dark"] {
+  --accent: #2997ff;
+  --accent-press: #58aeff;
+  --danger: #ff453a;
+
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2a2a2c;
+  --hairline: rgba(255, 255, 255, .1);
+  --divider: #2c2c2e;
+
+  --ink: #ffffff;
+  --ink-80: #d8d8dc;
+  --ink-48: #8e8e93;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;          /* not 16: the extra pixel sets the reading pace */
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overscroll-behavior-y: contain;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 480px; margin: 0 auto; padding: var(--s-sm) var(--s-md) 104px; }
+
+/* ---------- wide-screen layout ---------- */
+/* A phone stays single-column. From tablet width the status moves aside
+   and the actions take the space: one narrow column in the middle of a
+   monitor looks lost. */
+
+@media (min-width: 900px) {
+  .wrap { max-width: 1040px; display: grid; gap: var(--s-lg);
+          grid-template-columns: 340px 1fr; align-items: start;
+          padding-bottom: var(--s-xl); }
+  .wrap > .top { grid-column: 1 / -1; }
+  .col-a { position: sticky; top: var(--s-lg); }
+  .col-b .grouptitle:first-child { margin-top: 0; }
+}
+
+/* Focus ring: 2px solid, no soft glow */
+:where(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--accent-press);
+  outline-offset: 2px;
+}
+
+/* ---------- header ---------- */
+
+.top {
+  display: flex; align-items: center; gap: var(--s-sm);
+  padding: var(--s-sm) var(--s-xxs) var(--s-lg);
+}
+.top .name {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 600; line-height: 1.14; letter-spacing: -0.5px;
+}
+.top .sub {
+  color: var(--ink-48); font-size: 14px; line-height: 1.43;
+  letter-spacing: -0.224px; margin-top: 2px;
+}
+.top .grow { flex: 1; min-width: 0; }
+
+@media (max-width: 419px) {           /* small phone: shrink the heading */
+  .top .name { font-size: 24px; }
+}
+
+.dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none;
+  background: var(--ink-48); transition: background-color .22s var(--ease);
+}
+.dot.on { background: var(--switch-on); }
+.dot.off { background: var(--danger); }
+.dot.busy { background: var(--danger); }
+
+.iconbtn {
+  width: 40px; height: 40px; flex: none;
+  display: grid; place-items: center;
+  border: 1px solid var(--hairline); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--accent);
+  cursor: pointer; text-decoration: none; font-size: 17px;
+  transition: background-color .22s var(--ease), transform .12s var(--ease);
+}
+@media (hover: hover) {
+  .iconbtn:hover { background: var(--surface-2); }
+}
+.iconbtn:active { transform: scale(.95); }
+
+/* ---------- cards ---------- */
+/* Plain surface, hairline border, 18px radius, no shadow */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-md);
+  margin-bottom: var(--s-sm);
+}
+
+.grouptitle {
+  color: var(--ink-48);
+  font-size: 13px; font-weight: 400; line-height: 1.3; letter-spacing: -0.08px;
+  margin: var(--s-lg) var(--s-md) var(--s-xs);
+}
+
+/* ---------- countdown ---------- */
+
+.countdown {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-lg) var(--s-md) var(--s-md);
+  margin-bottom: var(--s-sm);
+  text-align: center;
+}
+.countdown.show { display: block; animation: appear .28s var(--ease); }
+.countdown .what { color: var(--ink-48); font-size: 14px; letter-spacing: -0.224px; }
+.countdown .num {
+  font-family: var(--font-display);
+  font-size: 72px; font-weight: 600; line-height: 1.07; letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;   /* keeps the digits from jumping */
+  color: var(--danger);
+  margin: var(--s-xxs) 0 var(--s-md);
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ---------- buttons ---------- */
+/* A pill means an action. Pressing always scales to 0.95. */
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: var(--s-xs);
+  width: 100%; min-height: var(--tap);
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--accent);
+  font-family: var(--font); font-size: 17px; font-weight: 400;
+  letter-spacing: -0.374px; cursor: pointer; padding: 11px 22px;
+  transition: background-color .22s var(--ease), color .22s var(--ease),
+              border-color .22s var(--ease), transform .12s var(--ease);
+}
+.btn svg { width: 19px; height: 19px; flex: none; }
+.btn:active { transform: scale(.95); }
+.btn:disabled { opacity: .35; cursor: default; transform: none; }
+
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.danger { background: var(--danger); color: var(--on-accent); }
+/* Ghost pill: transparent with an accent border */
+.btn.ghost { background: transparent; border-color: var(--accent); }
+
+@media (hover: hover) {
+  .btn:hover { background: var(--divider); }
+  .btn.primary:hover { background: var(--accent-press); }
+  .btn.danger:hover { filter: brightness(1.12); }
+  .btn.ghost:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .btn:disabled:hover { background: var(--surface-2); filter: none; }
+}
+
+/* ---------- action grid ---------- */
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-xs); }
+.grid .wide { grid-column: 1 / -1; }
+
+.act {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-xxs);
+  min-height: 96px; padding: var(--s-sm) var(--s-sm) var(--s-md);
+  border: 1px solid var(--hairline); border-radius: var(--r-lg);
+  background: var(--surface); color: var(--ink);
+  font-family: var(--font); text-align: left; cursor: pointer;
+  transition: background-color .22s var(--ease), border-color .22s var(--ease),
+              transform .12s var(--ease);
+}
+.act svg {
+  width: 22px; height: 22px; color: var(--accent); margin-bottom: var(--s-xxs);
+  transition: color .22s var(--ease);
+}
+.act .lbl { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; line-height: 1.24; }
+.act .hint {
+  color: var(--ink-48); font-size: 13px; line-height: 1.3;
+  letter-spacing: -0.08px; font-weight: 400;
+}
+.act:active { transform: scale(.95); }
+
+/* Red for irreversible actions only. The one-accent rule comes from a
+   showcase where nothing can be broken; here something can, and warning by
+   colour matters more than literal purity. iOS does the same. */
+.act[data-tone="danger"] svg { color: var(--danger); }
+
+@media (hover: hover) {
+  .act:hover { background: var(--surface-2); border-color: var(--accent); }
+  .act[data-tone="danger"]:hover { border-color: var(--danger); }
+}
+
+/* Confirmation inside the button: faster than a modal and it does not
+   cover the screen */
+.act.arm { background: var(--danger); border-color: var(--danger); }
+.act.arm .lbl, .act.arm .hint, .act.arm svg { color: var(--on-accent); }
+
+/* Cancel is a full-width pill: an emergency button has to be easy to hit,
+   so it steps out of the tile grid */
+.act.wide {
+  flex-direction: row; align-items: center; justify-content: center;
+  gap: var(--s-xs); min-height: var(--tap); padding: 11px 22px;
+  border-radius: var(--r-pill); background: var(--surface);
+}
+.act.wide svg { margin: 0; }
+.act.wide .lbl { font-weight: 400; color: var(--accent); }
+.act.wide .hint { display: none; }
+
+/* ---------- segmented control ---------- */
+/* Elevation through a surface change rather than a shadow */
+
+.seg {
+  display: flex; gap: 2px; padding: 2px;
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+}
+.seg button {
+  flex: 1; min-height: 36px; padding: 0;
+  border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--ink-48);
+  font-family: var(--font); font-size: 14px; font-weight: 400;
+  letter-spacing: -0.224px; cursor: pointer;
+  transition: background-color .22s var(--ease), color .22s var(--ease),
+              transform .12s var(--ease);
+}
+.seg button:active { transform: scale(.95); }
+.seg button[aria-pressed="true"] {
+  background: var(--surface); color: var(--ink); font-weight: 600;
+}
+@media (hover: hover) {
+  .seg button:hover { color: var(--ink); }
+}
+
+/* ---------- form fields ---------- */
+
+label.field { display: block; margin-bottom: var(--s-md); }
+label.field .cap {
+  color: var(--ink-48); font-size: 13px; letter-spacing: -0.08px;
+  margin-bottom: 6px; display: block;
+}
+input[type=text], input[type=password], input[type=number], textarea, select {
+  width: 100%; padding: 12px var(--s-sm); min-height: 44px;
+  border: 1px solid var(--hairline); border-radius: var(--r-md);
+  background: var(--surface-2); color: var(--ink);
+  font-family: var(--font); font-size: 17px; letter-spacing: -0.374px;
+  transition: border-color .22s var(--ease), background-color .22s var(--ease);
+}
+@media (hover: hover) {
+  input:hover, textarea:hover, select:hover { border-color: var(--ink-48); }
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--accent-press); outline-offset: -1px;
+  border-color: transparent; background: var(--surface);
+}
+textarea {
+  min-height: 92px; resize: vertical;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 14px;
+}
+.hintline {
+  color: var(--ink-48); font-size: 13px; line-height: 1.35;
+  letter-spacing: -0.08px; margin-top: 6px;
+}
+code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 12.5px; background: var(--surface-2);
+  padding: 1px 5px; border-radius: var(--r-xs);
+}
+
+/* ---------- list row ---------- */
+
+.row {
+  display: flex; align-items: center; gap: var(--s-sm);
+  padding: var(--s-sm) 0; border-bottom: 1px solid var(--divider);
+}
+.row:last-child { border-bottom: 0; }
+.row .grow { flex: 1; min-width: 0; }
+.row .t { font-size: 17px; letter-spacing: -0.374px; line-height: 1.3; }
+.row .d { color: var(--ink-48); font-size: 13px; letter-spacing: -0.08px; line-height: 1.3; }
+.row svg.lead { width: 21px; height: 21px; color: var(--accent); flex: none; }
+
+/* ---------- switch ---------- */
+/* Modelled on the system switch */
+
+.sw { position: relative; width: 51px; height: 31px; flex: none; }
+.sw input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.sw span {
+  position: absolute; inset: 0; border-radius: var(--r-pill);
+  background: var(--divider); transition: background-color .28s var(--ease);
+  pointer-events: none;
+}
+.sw span::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 27px; height: 27px; border-radius: 50%; background: #fff;
+  transition: transform .28s var(--ease);
+}
+.sw input:checked + span { background: var(--switch-on); }
+.sw input:checked + span::after { transform: translateX(20px); }
+.sw input:active + span::after { width: 31px; }   /* slight stretch on press */
+.sw input:disabled + span { opacity: .4; }
+.sw input:disabled { cursor: default; }
+
+/* ---------- toasts ---------- */
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  max-width: 88vw; padding: var(--s-sm) var(--s-lg);
+  border-radius: var(--r-pill);
+  background: var(--ink); color: var(--bg);
+  font-size: 15px; letter-spacing: -0.24px; text-align: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .24s var(--ease), transform .24s var(--ease);
+  z-index: 60;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.err { background: var(--danger); color: #fff; }
+
+/* ---------- lock screen ---------- */
+
+.lock {
+  position: fixed; inset: 0; z-index: 80;
+  display: none; flex-direction: column; justify-content: center;
+  padding: var(--s-xl) var(--s-lg); background: var(--bg);
+}
+.lock.show { display: flex; }
+.lock .box { width: 100%; max-width: 360px; margin: 0 auto; }
+.lock h1 {
+  font-family: var(--font-display);
+  font-size: 34px; font-weight: 600; line-height: 1.1; letter-spacing: -0.8px;
+  margin: 0 0 var(--s-xs);
+}
+.lock p {
+  color: var(--ink-48); margin: 0 0 var(--s-lg);
+  font-size: 17px; letter-spacing: -0.374px;
+}
+
+/* ---------- offline placeholder ---------- */
+
+.offline {
+  display: none; text-align: center;
+  padding: var(--s-lg) var(--s-md);
+  border: 1px solid var(--hairline); border-radius: var(--r-lg);
+  background: var(--surface); color: var(--ink-48);
+  margin-bottom: var(--s-sm); font-size: 15px; letter-spacing: -0.24px;
+}
+.offline.show { display: block; }
+.actions-area, #delaycard { transition: opacity .28s var(--ease); }
+body.is-offline .actions-area,
+body.is-offline #delaycard { opacity: .3; pointer-events: none; }
+
+/* ---------- settings page ---------- */
+
+.savebar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  padding: var(--s-sm) var(--s-md) calc(var(--s-sm) + env(safe-area-inset-bottom));
+  /* The blur is functional here: it shows content continues underneath */
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--hairline);
+  transform: translateY(130%); transition: transform .3s var(--ease);
+}
+.savebar.show { transform: none; }
+.savebar .inner { max-width: 480px; margin: 0 auto; }
+
+.logbox {
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: var(--s-sm); max-height: 340px; overflow: auto;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11.5px; line-height: 1.55; letter-spacing: 0;
+  white-space: pre-wrap; word-break: break-word; color: var(--ink-80);
+}
+.logbox .warn { color: var(--accent); }
+.logbox .err { color: var(--danger); }
+
+.chiplist { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--r-pill);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  font-size: 14px; letter-spacing: -0.224px;
+}
+.chip button { border: 0; background: none; color: var(--ink-48); cursor: pointer; padding: 0; }
+
+.danger-zone .grouptitle { color: var(--danger); }
+
+.state-ok { color: var(--switch-on); }
+.state-bad { color: var(--danger); }
+
+/* ---------- settings shell: sidebar plus content ---------- */
+/* One long list of settings is unreadable on a monitor: reaching the
+   right section means scrolling past six others. Hence tabs, with the
+   menu in a always-visible side column on wide screens. */
+
+.shell { display: flex; min-height: 100vh; align-items: stretch; }
+
+.side {
+  width: 264px; flex: none;
+  background: var(--surface);
+  border-right: 1px solid var(--hairline);
+  padding: var(--s-lg) var(--s-sm);
+  display: flex; flex-direction: column; gap: var(--s-xxs);
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+
+.brand { display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-sm) var(--s-lg); }
+.brand .logo {
+  width: 40px; height: 40px; border-radius: var(--r-md); flex: none;
+  display: grid; place-items: center;
+  background: var(--accent); color: #fff;
+}
+.brand .logo svg { width: 22px; height: 22px; }
+.brand .bname { font-weight: 600; font-size: 17px; letter-spacing: -0.374px; }
+.brand .baddr { color: var(--ink-48); font-size: 13px; letter-spacing: -0.08px; }
+
+.side nav { display: flex; flex-direction: column; gap: 2px; }
+.side nav button {
+  display: flex; align-items: center; gap: var(--s-sm);
+  width: 100%; padding: 11px var(--s-sm); min-height: 44px;
+  border: 0; border-radius: var(--r-md); background: transparent;
+  color: var(--ink); font-family: var(--font); font-size: 15px;
+  letter-spacing: -0.24px; text-align: left; cursor: pointer;
+  transition: background-color .22s var(--ease), color .22s var(--ease),
+              transform .12s var(--ease);
+}
+.side nav button svg { width: 19px; height: 19px; color: var(--ink-48); flex: none; }
+.side nav button:active { transform: scale(.97); }
+.side nav button[aria-selected="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+.side nav button[aria-selected="true"] svg { color: #fff; }
+@media (hover: hover) {
+  .side nav button:hover { background: var(--surface-2); }
+  .side nav button[aria-selected="true"]:hover { background: var(--accent-press); }
+}
+
+.side .spacer { flex: 1; }
+.side .side-link {
+  display: flex; align-items: center; gap: var(--s-xs);
+  padding: 11px var(--s-sm); border-radius: var(--r-md);
+  color: var(--accent); text-decoration: none; font-size: 15px;
+  letter-spacing: -0.24px;
+}
+.side .side-link svg { width: 17px; height: 17px; }
+@media (hover: hover) { .side .side-link:hover { background: var(--surface-2); } }
+
+.content { flex: 1; min-width: 0; padding: var(--s-lg) var(--s-lg) 120px; }
+.content .inner { max-width: 720px; margin: 0 auto; }
+
+.panel { display: none; }
+.panel.active { display: block; animation: appear .22s var(--ease); }
+.panel h2 {
+  font-family: var(--font-display); font-size: 34px; font-weight: 600;
+  line-height: 1.1; letter-spacing: -0.8px; margin: 0 0 var(--s-xxs);
+}
+.panel .lede { color: var(--ink-48); margin: 0 0 var(--s-lg); font-size: 15px; }
+
+/* Tablet and phone: the menu becomes a horizontal strip on top */
+@media (max-width: 833px) {
+  .shell { flex-direction: column; }
+  .side {
+    width: auto; height: auto; position: sticky; top: 0; z-index: 40;
+    border-right: 0; border-bottom: 1px solid var(--hairline);
+    padding: var(--s-sm) var(--s-sm) 0;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  .brand { padding-bottom: var(--s-sm); }
+  .side nav {
+    flex-direction: row; gap: 6px; overflow-x: auto; padding-bottom: var(--s-sm);
+    scrollbar-width: none;
+  }
+  .side nav::-webkit-scrollbar { display: none; }
+  .side nav button {
+    width: auto; white-space: nowrap; border-radius: var(--r-pill);
+    background: var(--surface-2); min-height: 40px; padding: 8px 15px;
+  }
+  .side nav button svg { display: none; }
+  .side .spacer, .side .side-link { display: none; }
+  .content { padding: var(--s-md) var(--s-md) 120px; }
+  .panel h2 { font-size: 28px; }
+}
+
+/* ---------- overview tiles ---------- */
+
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-xs); }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+.stat {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: var(--r-lg); padding: var(--s-sm) var(--s-md);
+}
+.stat .k { color: var(--ink-48); font-size: 13px; letter-spacing: -0.08px; }
+.stat .v {
+  font-size: 21px; font-weight: 600; letter-spacing: -0.4px; margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.stat .v.small { font-size: 15px; font-weight: 400; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: var(--r-pill);
+  font-size: 13px; letter-spacing: -0.08px;
+  background: var(--surface-2); color: var(--ink-48);
+}
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--switch-on); }
+.pill.bad { color: var(--danger); }
+
+/* Respect the reduced-motion system setting */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ---------- action grid on wide screens ---------- */
+/* Kept at the end of the file: the base .grid rule is declared after the
+   layout block and, at equal specificity, was overriding it. */
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1240px) {
+  .grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ---------- theme switch ---------- */
+
+/* Sized here rather than by markup attributes: the theme and language
+   buttons are drawn from script, and an unsized SVG fills the screen. */
+.iconbtn svg { width: 19px; height: 19px; flex: none; }
+.side-link svg { width: 17px; height: 17px; flex: none; }
